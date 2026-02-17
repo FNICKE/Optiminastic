@@ -25,6 +25,7 @@ export const getClientId = () => localStorage.getItem('clientId');
 
 // Wallet
 export const getBalance     = () => api.get('/wallet/balance');
+export const getTransactionHistory = () => api.get('/wallet/history');   // ← NEW
 
 // Orders
 export const createOrder    = (amount) => api.post('/orders', { amount });

@@ -1,4 +1,3 @@
-
 const pool = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
 
@@ -98,4 +97,63 @@ async function getBalance(req, res) {
   }
 }
 
-module.exports = { creditWallet, debitWallet, getBalance };
+async function getTransactionHistory(req, res) {
+  const clientId = req.clientId;
+
+  // Early exit if no clientId (middleware failed)
+  if (!clientId) {
+    console.error('getTransactionHistory: Missing clientId in request');
+    return res.status(401).json({ error: 'Unauthorized - client ID missing' });
+  }
+
+  console.log(`Fetching history for client: ${clientId}`);
+
+  try {
+    const [rows] = await pool.execute(
+      `SELECT 
+         id,
+         type,
+         amount,
+         reference_id,
+         created_at
+       FROM ledger_entries 
+       WHERE client_id = ?
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [clientId]
+    );
+
+    const formatted = rows.map(row => ({
+      id: row.id,
+      type: row.type,
+      amount: Number(row.amount || 0),
+      reference_id: row.reference_id || null,
+      // Safe date handling
+      created_at: row.created_at && row.created_at.toISOString 
+        ? row.created_at.toISOString().slice(0, 19).replace('T', ' ')
+        : row.created_at || 'N/A'
+    }));
+
+    res.json(formatted);
+  } catch (err) {
+    console.error('Transaction history error:', {
+      message: err.message,
+      stack: err.stack,
+      code: err.code,
+      sqlMessage: err.sqlMessage,
+      sql: err.sql
+    });
+    res.status(500).json({ 
+      error: 'Failed to fetch transaction history',
+      // Only show details in development
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+}
+
+module.exports = { 
+  creditWallet, 
+  debitWallet, 
+  getBalance,
+  getTransactionHistory   // ← exported now
+};

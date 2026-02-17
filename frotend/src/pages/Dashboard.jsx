@@ -4,13 +4,14 @@ import WalletBalance from '../components/WalletBalance';
 import CreateOrderForm from '../components/CreateOrderForm';
 import OrderDetails from '../components/OrderDetails';
 import AdminControls from '../components/AdminControls';
+import TransactionHistory from '../components/TransactionHistory';   // ← NEW
 
 export default function Dashboard() {
   const { isAdmin, clientId } = useAppContext();
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-12 text-center">
           Wallet Dashboard
         </h1>
@@ -37,6 +38,9 @@ export default function Dashboard() {
                 <CreateOrderForm />
               </div>
             )}
+
+            {/* Transaction History - visible to everyone */}
+            <TransactionHistory />
           </div>
 
           {/* Right column - Order Details */}
