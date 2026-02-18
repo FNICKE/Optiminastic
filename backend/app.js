@@ -6,24 +6,41 @@ const orderRoutes = require('./src/routes/orderRoutes');
 
 const app = express();
 
-// CORS - allow Vite frontend
+// Allowed origins (only production – remove localhost if you don't need local testing anymore)
+const allowedOrigins = [
+  'https://wallet-system1.netlify.app',
+];
+
+// CORS configuration – reflective origin (best practice)
 app.use(cors({
-  origin: 'http://localhost:5173',
-  methods: ['GET', 'POST', 'OPTIONS'],
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, origin);   // echo back the requesting origin
+    } else {
+      console.warn(`CORS blocked for origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'client-id', 'x-admin-secret', 'Authorization'],
   credentials: false,
 }));
 
+app.use((req, res, next) => {
+  console.log(`[DEBUG] ${req.method} ${req.path} from origin: ${req.headers.origin || 'none'}`);
+  next();
+});
+
 app.use(express.json());
 
-// Routes – NO /api prefix
+// Routes
 app.use('/admin/wallet', walletRoutes);
 app.use('/orders', orderRoutes);
-app.use('/wallet', walletRoutes);       // → /wallet/balance
+app.use('/wallet', walletRoutes);  // → /wallet/balance, /wallet/history
 
-// 404 handler – keep it last
+// 404 handler – last
 app.use((req, res) => {
-  res.status(404).json({ error: 'Endpoint not found' });
+  res.status(404).json({ error: 'Endpoint not found – code updated' });
 });
 
 module.exports = app;
